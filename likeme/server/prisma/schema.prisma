@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+ 
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+ 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String
+  name         String
+  username     String   @unique
+  city         String?
+  about        String?
+  avatarUrl    String?
+  interests    String   @default("")
+  createdAt    DateTime @default(now())
+ 
+  modelProfile     ModelProfile?
+  clientProfile    ClientProfile?
+  posts            Post[]
+  comments         Comment[]
+  likes            Like[]
+  applications     Application[]
+  jobs             Job[]
+  sentMessages     Message[]         @relation("SentMessages")
+  conversations    Participant[]
+  notifications    Notification[]
+  reviewsWritten   Review[]          @relation("ReviewAuthor")
+  reviewsReceived  Review[]          @relation("ReviewSubject")
+  verification     Verification?
+  followers        Follow[]          @relation("Following")
+  following        Follow[]          @relation("Follower")
+}
+ 
+model ModelProfile {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heightCm         Int?
+  languages        String  @default("")
+  skills           String  @default("")
+  categories       String  @default("")
+  experienceYears  Int     @default(0)
+  availability     String?
+  expectedRate     Int?
+  willingToTravel  Boolean @default(false)
+  instagramHandle  String?
+  instagramFollowers Int?
+  portfolioCount   Int     @default(0)
+  aiScore          AiScore?
+}
+ 
+model ClientProfile {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName       String
+  website           String?
+  businessVerified  Boolean @default(false)
+  jobsPosted        Int     @default(0)
+  paymentCompletion Int     @default(100)
+}
+ 
+model AiScore {
+  id             String       @id @default(cuid())
+  modelProfileId String       @unique
+  modelProfile   ModelProfile @relation(fields: [modelProfileId], references: [id], onDelete: Cascade)
+  overall        Int
+  portfolio      Int
+  consistency    Int
+  engagement     Int
+  professional   Int
+  recommendations String      @default("")
+  updatedAt      DateTime     @updatedAt
+}
+ 
+model PortfolioItem {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  url       String
+  caption   String?
+  createdAt DateTime @default(now())
+}
+ 
+model Post {
+  id        String    @id @default(cuid())
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  caption   String
+  mediaUrls String    @default("")
+  location  String?
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+  likes     Like[]
+}
+ 
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+ 
+model Like {
+  id     String @id @default(cuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([postId, userId])
+}
+ 
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  follower    User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+ 
+  @@unique([followerId, followingId])
+}
+ 
+model Job {
+  id            String        @id @default(cuid())
+  clientId      String
+  client        User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  category      String
+  location      String
+  date          DateTime
+  durationHours Int
+  modelsNeeded  Int           @default(1)
+  requirements  String        @default("")
+  budget        Int
+  deadline      DateTime?
+  status        String        @default("open")
+  createdAt     DateTime      @default(now())
+  applications  Application[]
+}
+ 
+model Application {
+  id           String   @id @default(cuid())
+  jobId        String
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  modelId      String
+  model        User     @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  introduction String
+  expectedFee  Int?
+  status       String   @default("applied")
+  createdAt    DateTime @default(now())
+ 
+  @@unique([jobId, modelId])
+}
+ 
+model Conversation {
+  id           String        @id @default(cuid())
+  jobId        String?
+  createdAt    DateTime      @default(now())
+  participants Participant[]
+  messages     Message[]
+}
+ 
+model Participant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([conversationId, userId])
+}
+ 
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  body           String
+  createdAt      DateTime     @default(now())
+}
+ 
+model Review {
+  id         String   @id @default(cuid())
+  jobId      String?
+  authorId   String
+  author     User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subjectId  String
+  subject    User     @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  overall    Int
+  ratings    String   @default("")
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+ 
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+ 
+model Verification {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identity  Boolean @default(false)
+  phone     Boolean @default(false)
+  email     Boolean @default(false)
+  instagram Boolean @default(false)
+  business  Boolean @default(false)
+}
+ 
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  targetType String
+  targetId   String
+  reason     String
+  details    String?
+  createdAt  DateTime @default(now())
+}
