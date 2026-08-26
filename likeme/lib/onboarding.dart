@@ -1,160 +1,129 @@
 import 'package:flutter/material.dart';
-import 'package:likeme/chooserole.dart';
+import 'chooserole.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
-
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController controller = PageController();
-
-  int currentPage = 0;
-
-  final List<Map<String, dynamic>> pages = [
-    {
-      'icon': Icons.people_alt_rounded,
-      'title': 'Find the right talent',
-      'description':
-          'Discover models, creators and talent for your next project.',
-    },
-    {
-      'icon': Icons.work_rounded,
-      'title': 'Find exciting opportunities',
-      'description':
-          'Models can discover jobs and connect directly with clients.',
-    },
-    {
-      'icon': Icons.auto_awesome_rounded,
-      'title': 'Build your reputation',
-      'description':
-          'Showcase your portfolio, collect reviews and build your professional score.',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF8FC),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: controller,
-                itemCount: pages.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentPage = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final page = pages[index];
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            children: [
+              const Spacer(),
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 190,
-                          width: 190,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.1),
-                          ),
-                          child: Icon(
-                            page['icon'],
-                            size: 90,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 50),
-                        Text(
-                          page['title'],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          page['description'],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey.shade600,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                pages.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 8,
-                  width: currentPage == index ? 25 : 8,
-                  decoration: BoxDecoration(
-                    color: currentPage == index
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(20),
+              // Logo
+              Container(
+                height: 110,
+                width: 110,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF7B2CBF),
+                      Color(0xFFE056FD),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF7B2CBF).withValues(alpha: 0.25),
+                      blurRadius: 25,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 55,
                 ),
               ),
-            ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            Padding(
-              padding: const EdgeInsets.fromLTRB(25, 0, 25, 25),
-              child: SizedBox(
+              const Text(
+                'LikeMe',
+                style: TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF242424),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                'Where talent meets opportunity',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              const Text(
+                'Connect with models, brands and clients.\n'
+                'Discover opportunities and grow your career.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: Colors.black45,
+                ),
+              ),
+
+              const Spacer(),
+
+              SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (currentPage == pages.length - 1) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChooseRoleScreen(),
-                        ),
-                      );
-                    } else {
-                      controller.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChooseRoleScreen(),
+                      ),
+                    );
                   },
-                  child: Text(
-                    currentPage == pages.length - 1
-                        ? 'Get Started'
-                        : 'Continue',
-                    style: const TextStyle(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7B2CBF),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Get Started',
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 18),
+
+              const Text(
+                'Find your next opportunity',
+                style: TextStyle(
+                  color: Colors.black38,
+                  fontSize: 13,
+                ),
+              ),
+
+              const SizedBox(height: 25),
+            ],
+          ),
         ),
       ),
     );

@@ -34,6 +34,10 @@ model User {
   reviewsWritten   Review[]          @relation("ReviewAuthor")
   reviewsReceived  Review[]          @relation("ReviewSubject")
   verification     Verification?
+  portfolioItems   PortfolioItem[]
+  videoReviewsWritten VideoReview[] @relation("VideoReviewAuthor")
+  reels            Reel[]
+  reelLikes        ReelLike[]
   followers        Follow[]          @relation("Following")
   following        Follow[]          @relation("Follower")
 }
@@ -54,6 +58,7 @@ model ModelProfile {
   instagramFollowers Int?
   portfolioCount   Int     @default(0)
   aiScore          AiScore?
+  instagramAccount InstagramAccount?
 }
  
 model ClientProfile {
@@ -83,10 +88,66 @@ model AiScore {
 model PortfolioItem {
   id        String   @id @default(cuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String
   url       String
   caption   String?
+  durationSeconds Int?
+  averageRating   Float @default(0)
+  ratingCount     Int   @default(0)
   createdAt DateTime @default(now())
+  videoReviews VideoReview[]
+}
+
+model VideoReview {
+  id              String        @id @default(cuid())
+  portfolioItemId String
+  portfolioItem   PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User          @relation("VideoReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  bookingId       String?
+  rating          Int
+  comment         String?
+  createdAt       DateTime      @default(now())
+
+  @@unique([portfolioItemId, authorId, bookingId])
+}
+
+model InstagramAccount {
+  id              String       @id @default(cuid())
+  modelProfileId  String       @unique
+  modelProfile    ModelProfile @relation(fields: [modelProfileId], references: [id], onDelete: Cascade)
+  instagramUserId String       @unique
+  handle          String
+  followers       Int          @default(0)
+  engagementScore Float        @default(0)
+  insightsEnabled Boolean      @default(true)
+  verifiedAt      DateTime?
+  lastSyncedAt    DateTime?
+  createdAt       DateTime     @default(now())
+}
+
+model Reel {
+  id        String     @id @default(cuid())
+  authorId  String
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  videoUrl  String
+  caption   String     @default("")
+  createdAt DateTime   @default(now())
+  likes     ReelLike[]
+
+  @@index([createdAt])
+}
+
+model ReelLike {
+  id        String   @id @default(cuid())
+  reelId    String
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reelId, userId])
 }
  
 model Post {

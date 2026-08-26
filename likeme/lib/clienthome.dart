@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:likeme/clientdash.dart';
 import 'package:likeme/clientjob.dart';
 import 'package:likeme/discovermodel.dart';
+import 'package:likeme/reels.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -16,6 +17,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final screens = const [
     ClientDashboard(),
     DiscoverModelsScreen(),
+    ReelsScreen(),
     ClientJobsScreen(),
   ];
 
@@ -40,6 +42,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'Models',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.video_collection_outlined),
+            selectedIcon: Icon(Icons.video_collection),
+            label: 'Reels',
           ),
           NavigationDestination(
             icon: Icon(Icons.work_outline),
