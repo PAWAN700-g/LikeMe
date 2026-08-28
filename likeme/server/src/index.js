@@ -379,4 +379,4 @@ app.use((error, _, response, __) => {
   response.status(error.code === 'P2003' ? 400 : 500).json({ error: error.message || 'Unable to complete the request.' });
 });
 
-app.listen(port, () => console.log(`LikeMe server listening on http://localhost:${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`LikeMe server listening on http://0.0.0.0:${port}`));
