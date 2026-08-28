@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:likeme/services/api_service.dart';
 
 class ClientJobsScreen extends StatefulWidget {
   const ClientJobsScreen({super.key});
@@ -425,7 +426,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
     super.dispose();
   }
 
-  void submitJob() {
+  Future<void> submitJob() async {
     if (titleController.text.trim().isEmpty ||
         locationController.text.trim().isEmpty ||
         budgetController.text.trim().isEmpty) {
@@ -437,15 +438,33 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
       return;
     }
 
-    Navigator.pop(context);
+    try {
+      await ApiService.instance.createJob(
+        title: titleController.text.trim(),
+        category: category,
+        location: locationController.text.trim(),
+        date: DateTime.now().toIso8601String(),
+        durationHours: 6,
+        budget: int.tryParse(budgetController.text.trim()) ?? 10000,
+        description: descriptionController.text.trim(),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Job created successfully! Backend connection comes next.',
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Job published successfully!'),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not publish job: ${e.toString().replaceAll('Exception: ', '')}'),
+        ),
+      );
+    }
   }
 
   @override

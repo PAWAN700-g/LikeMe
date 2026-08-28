@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:likeme/services/api_service.dart';
 import 'modelhome.dart';
 import 'clienthome.dart';
 
@@ -43,32 +44,47 @@ class _SignupScreenState extends State<SignupScreen> {
       loading = true;
     });
 
-    // Temporary local signup.
-    // Node.js backend will be connected later.
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    if (!mounted) return;
-
-    setState(() {
-      loading = false;
-    });
-
-    if (widget.role == 'model') {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const ModelHomeScreen(),
-        ),
-        (route) => false,
+    try {
+      final user = await ApiService.instance.register(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        name: nameController.text.trim(),
+        username: usernameController.text.trim(),
+        role: widget.role,
       );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const ClientHomeScreen(),
+
+      if (!mounted) return;
+
+      if (user.role == 'model') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ModelHomeScreen(),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ClientHomeScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration failed: ${e.toString().replaceAll('Exception: ', '')}'),
         ),
-        (route) => false,
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:likeme/services/api_service.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -9,53 +10,55 @@ class JobsScreen extends StatefulWidget {
 
 class _JobsScreenState extends State<JobsScreen> {
   String selectedCategory = 'All';
+  bool isLoading = true;
 
-  final List<ModelJob> jobs = [
-    ModelJob(
-      title: 'Fashion Brand Photoshoot',
-      company: 'Urban Vogue',
-      category: 'Fashion',
-      location: 'Mumbai',
-      budget: 25000,
-      date: '15 Sep 2026',
-      duration: '6 Hours',
-      applicants: 8,
-      verified: true,
-    ),
-    ModelJob(
-      title: 'Instagram Brand Campaign',
-      company: 'Glow Cosmetics',
-      category: 'Beauty',
-      location: 'Delhi',
-      budget: 18000,
-      date: '22 Sep 2026',
-      duration: '4 Hours',
-      applicants: 12,
-      verified: true,
-    ),
-    ModelJob(
-      title: 'Fitness Product Shoot',
-      company: 'FitPro India',
-      category: 'Fitness',
-      location: 'Bangalore',
-      budget: 30000,
-      date: '05 Oct 2026',
-      duration: '8 Hours',
-      applicants: 5,
-      verified: true,
-    ),
-    ModelJob(
-      title: 'New Clothing Collection',
-      company: 'StyleHub',
-      category: 'Fashion',
-      location: 'Pune',
-      budget: 22000,
-      date: '12 Oct 2026',
-      duration: '5 Hours',
-      applicants: 15,
-      verified: false,
-    ),
-  ];
+  List<ModelJob> jobs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJobs();
+  }
+
+  Future<void> _loadJobs() async {
+    try {
+      final list = await ApiService.instance.fetchJobs();
+      if (!mounted) return;
+      setState(() {
+        jobs = list.map((json) => ModelJob.fromJson(json)).toList();
+        isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        jobs = [
+          ModelJob(
+            title: 'Fashion Brand Photoshoot',
+            company: 'Urban Vogue',
+            category: 'Fashion',
+            location: 'Mumbai',
+            budget: 25000,
+            date: '15 Sep 2026',
+            duration: '6 Hours',
+            applicants: 8,
+            verified: true,
+          ),
+          ModelJob(
+            title: 'Instagram Brand Campaign',
+            company: 'Glow Cosmetics',
+            category: 'Beauty',
+            location: 'Delhi',
+            budget: 18000,
+            date: '22 Sep 2026',
+            duration: '4 Hours',
+            applicants: 12,
+            verified: true,
+          ),
+        ];
+        isLoading = false;
+      });
+    }
+  }
 
   List<ModelJob> get filteredJobs {
     if (selectedCategory == 'All') {
@@ -1037,6 +1040,7 @@ class _Requirement extends StatelessWidget {
 // ============================================================
 
 class ModelJob {
+  final String? id;
   final String title;
   final String company;
   final String category;
@@ -1048,6 +1052,7 @@ class ModelJob {
   final bool verified;
 
   ModelJob({
+    this.id,
     required this.title,
     required this.company,
     required this.category,
@@ -1058,4 +1063,17 @@ class ModelJob {
     required this.applicants,
     required this.verified,
   });
+
+  factory ModelJob.fromJson(Map<String, dynamic> json) => ModelJob(
+        id: json['id'] as String?,
+        title: json['title'] as String,
+        company: json['company'] as String,
+        category: json['category'] as String,
+        location: json['location'] as String,
+        budget: (json['budget'] as num).toInt(),
+        date: json['date'] as String,
+        duration: json['duration'] as String,
+        applicants: (json['applicants'] as num).toInt(),
+        verified: json['verified'] as bool? ?? true,
+      );
 }

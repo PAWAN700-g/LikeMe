@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:likeme/modelprofile.dart';
+import 'package:likeme/services/api_service.dart';
 
 class DiscoverModelsScreen extends StatefulWidget {
   const DiscoverModelsScreen({super.key});
@@ -11,6 +12,7 @@ class DiscoverModelsScreen extends StatefulWidget {
 class _DiscoverModelsScreenState extends State<DiscoverModelsScreen> {
   String selectedCategory = 'All';
   String searchQuery = '';
+  bool isLoading = true;
 
   final List<String> categories = [
     'All',
@@ -21,68 +23,56 @@ class _DiscoverModelsScreenState extends State<DiscoverModelsScreen> {
     'Beauty',
   ];
 
-  final List<ModelData> models = [
-    ModelData(
-      name: 'Ananya Sharma',
-      username: '@ananya',
-      category: 'Fashion',
-      location: 'Mumbai',
-      rating: 4.9,
-      aiScore: 94,
-      followers: '125K',
-      experience: '4 years',
-      imageUrl:
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600',
-    ),
-    ModelData(
-      name: 'Priya Singh',
-      username: '@priyasingh',
-      category: 'Runway',
-      location: 'Delhi',
-      rating: 4.8,
-      aiScore: 91,
-      followers: '98K',
-      experience: '3 years',
-      imageUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
-    ),
-    ModelData(
-      name: 'Riya Mehta',
-      username: '@riyamehta',
-      category: 'Fitness',
-      location: 'Bangalore',
-      rating: 4.7,
-      aiScore: 89,
-      followers: '76K',
-      experience: '2 years',
-      imageUrl:
-          'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600',
-    ),
-    ModelData(
-      name: 'Sara Kapoor',
-      username: '@sarakapoor',
-      category: 'Beauty',
-      location: 'Mumbai',
-      rating: 4.9,
-      aiScore: 96,
-      followers: '210K',
-      experience: '5 years',
-      imageUrl:
-          'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=600',
-    ),
-    ModelData(
-      name: 'Meera Patel',
-      username: '@meerapatel',
-      category: 'Commercial',
-      location: 'Pune',
-      rating: 4.6,
-      aiScore: 87,
-      followers: '54K',
-      experience: '2 years',
-      imageUrl:
-          'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=600',
-    ),
-  ];
+  List<ModelData> models = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadModels();
+  }
+
+  Future<void> _loadModels() async {
+    try {
+      final list = await ApiService.instance.fetchModels();
+      if (!mounted) return;
+      setState(() {
+        models = list.map((json) => ModelData.fromJson(json)).toList();
+        isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      // Fallback fallback models if offline
+      setState(() {
+        models = [
+          ModelData(
+            name: 'Ananya Sharma',
+            username: '@ananya',
+            category: 'Fashion',
+            location: 'Mumbai',
+            rating: 4.9,
+            aiScore: 94,
+            followers: '125K',
+            experience: '4 years',
+            imageUrl:
+                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600',
+          ),
+          ModelData(
+            name: 'Priya Singh',
+            username: '@priyasingh',
+            category: 'Runway',
+            location: 'Delhi',
+            rating: 4.8,
+            aiScore: 91,
+            followers: '98K',
+            experience: '3 years',
+            imageUrl:
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
+          ),
+        ];
+        isLoading = false;
+      });
+    }
+  }
 
   List<ModelData> get filteredModels {
     return models.where((model) {
@@ -558,4 +548,16 @@ class ModelData {
     required this.experience,
     required this.imageUrl,
   });
+
+  factory ModelData.fromJson(Map<String, dynamic> json) => ModelData(
+        name: json['name'] as String,
+        username: json['username'] as String,
+        category: json['category'] as String,
+        location: json['location'] as String,
+        rating: (json['rating'] as num?)?.toDouble() ?? 4.8,
+        aiScore: (json['aiScore'] as num?)?.toInt() ?? 90,
+        followers: json['followers'] as String? ?? '100K',
+        experience: json['experience'] as String? ?? '2 years',
+        imageUrl: json['imageUrl'] as String,
+      );
 }

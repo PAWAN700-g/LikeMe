@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:likeme/services/api_service.dart';
 import 'package:video_player/video_player.dart';
 
 class Reel {
@@ -42,14 +40,6 @@ class ReelStore extends ChangeNotifier {
   ReelStore._();
 
   static final ReelStore instance = ReelStore._();
-  static const _apiUrl = String.fromEnvironment(
-    'REELS_API_URL',
-    defaultValue: 'http://10.0.2.2:3000',
-  );
-  static const _userId = String.fromEnvironment(
-    'APP_USER_ID',
-    defaultValue: 'demo-model-ananya',
-  );
 
   List<Reel> _reels = [];
 
@@ -63,68 +53,72 @@ class ReelStore extends ChangeNotifier {
     error = null;
     notifyListeners();
 
-    // Simulate loading
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    _reels = [
-      const Reel(
-        id: '1',
-        videoUrl:
-            'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-        modelName: 'Ananya Sharma',
-        handle: '@ananya_sharma',
-        caption: 'Fashion shoot ✨ Mumbai',
-        likes: 1240,
-        likedByViewer: false,
-      ),
-
-      const Reel(
-        id: '2',
-        videoUrl:
-            'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-        modelName: 'Priya Singh',
-        handle: '@priya_singh',
-        caption: 'New collection shoot 📸',
-        likes: 890,
-        likedByViewer: false,
-      ),
-    ];
-
-    isLoading = false;
-    notifyListeners();
+    try {
+      final list = await ApiService.instance.fetchReels();
+      _reels = list.map((json) => Reel.fromJson(json)).toList();
+    } catch (e) {
+      error = 'Could not load reels from server.';
+      // Fallback fallback static reels if server offline
+      _reels = [
+        const Reel(
+          id: '1',
+          videoUrl:
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+          modelName: 'Ananya Sharma',
+          handle: '@ananya_sharma',
+          caption: 'Fashion shoot ✨ Mumbai',
+          likes: 1240,
+          likedByViewer: false,
+        ),
+        const Reel(
+          id: '2',
+          videoUrl:
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+          modelName: 'Priya Singh',
+          handle: '@priya_singh',
+          caption: 'New collection shoot 📸',
+          likes: 890,
+          likedByViewer: false,
+        ),
+      ];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> toggleLike(int index) async {
     final reel = _reels[index];
+    final originalLiked = reel.likedByViewer;
+    final originalLikes = reel.likes;
 
+    // Optimistic UI update
     _reels[index] = reel.copyWith(
-      likedByViewer: !reel.likedByViewer,
-      likes: reel.likes + (reel.likedByViewer ? -1 : 1),
+      likedByViewer: !originalLiked,
+      likes: originalLikes + (originalLiked ? -1 : 1),
     );
-
     notifyListeners();
+
+    try {
+      final res = await ApiService.instance.toggleReelLike(reel.id);
+      _reels[index] = reel.copyWith(
+        likedByViewer: res['liked'] as bool,
+        likes: res['likes'] as int,
+      );
+      notifyListeners();
+    } catch (_) {
+      // Revert if error
+      _reels[index] = reel.copyWith(
+        likedByViewer: originalLiked,
+        likes: originalLikes,
+      );
+      notifyListeners();
+    }
   }
 
   Future<void> publish(XFile file, String caption) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_apiUrl/api/reels'),
-    )
-      ..headers['x-user-id'] = _userId
-      ..fields['caption'] = caption
-      ..files.add(
-        http.MultipartFile.fromBytes(
-          'video',
-          await file.readAsBytes(),
-          filename: file.name,
-        ),
-      );
-    final response = await request.send();
-    final body = await response.stream.bytesToString();
-    if (response.statusCode != 201) {
-      throw Exception('Reel upload failed: ${response.statusCode}');
-    }
-    _reels.insert(0, Reel.fromJson(jsonDecode(body) as Map<String, dynamic>));
+    final json = await ApiService.instance.publishReel(file, caption);
+    _reels.insert(0, Reel.fromJson(json));
     notifyListeners();
   }
 }
